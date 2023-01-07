@@ -1,7 +1,7 @@
 import requests
 def rates():
     res = requests.get('https://www.cbr-xml-daily.ru/daily_json.js').json()
-    with open ('rates.csv', 'w') as file:
+    with open ('/Users/estaban/Desktop/Прогерство/python_GB/hw10/rates.csv', 'w') as file:
         k = 'Валюта, Курс'
         file.write(k)
         file.write('\n')
