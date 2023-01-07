@@ -10,7 +10,6 @@ import time
 quantity = 117
 max_grab = 28
 game = False
-time_now = datetime.datetime.now().time()
  
 bot = telebot.TeleBot(config.token())
 
@@ -54,6 +53,7 @@ def callback(call):
             msg = bot.send_message(call.message.chat.id,'Нажмите Go, чтобы начать',reply_markup=markup1)
             bot.register_next_step_handler(msg, GoStopHandler)
         elif call.data == 'time':
+            time_now = datetime.datetime.now().time()
             bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text= f'{str(time_now)[:8]}')
  
 def GoStopHandler(message):
@@ -115,4 +115,4 @@ def GrabHandler(message):
 def gameWarning (message):
     bot.send_message(message.chat.id, 'Необходимо выбрать от 1 до 28 конфет')
 
-bot.polling()
+bot.infinity_polling()
