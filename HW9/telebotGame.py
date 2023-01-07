@@ -5,6 +5,7 @@ from random import randint, choice
 import datetime
 import config 
 from telegram import Update
+import time
 
 quantity = 117
 max_grab = 28
@@ -43,31 +44,38 @@ def callback(call):
     if call.message:
         if call.data == 'gameInit':
             bot.send_message(call.message.chat.id, 'Тогда пришло время узнать правила.')
+            time.sleep(1)
             bot.send_message(call.message.chat.id, 'На столе лежит 117 конфет. Играют два игрока делая ход друг после друга. За один ход можно забрать не более чем 28 конфет. Все конфеты оппонента достаются сделавшему последний ход.')
+            time.sleep(2)
             markup1 = types.ReplyKeyboardMarkup(resize_keyboard=True)
-            btn1 = types.InlineKeyboardButton("Go", callback_data='1')
-            btn2 = types.InlineKeyboardButton("Stop", callback_data='2')
+            btn1 = types.KeyboardButton("Go")
+            btn2 = types.KeyboardButton("Stop")
             markup1.add(btn1, btn2)
             msg = bot.send_message(call.message.chat.id,'Нажмите Go, чтобы начать',reply_markup=markup1)
             bot.register_next_step_handler(msg, GoStopHandler)
         elif call.data == 'time':
             bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id, text= f'{str(time_now)[:8]}')
  
-@bot.message_handler(content_types=['text'])
 def GoStopHandler(message):
     if message.text == 'Go':
         global quantity, max_grab, game
         game = True
         quantity = 117
+        time.sleep(1)
         bot.reply_to(message, "Начинаем")
+        time.sleep(2)
         turn = choice(['Bot', 'User'])
-        bot.send_message(message.chat.id, f'Начинает {turn}')
+        bot.send_message(message.chat.id, f'Ход {turn}')
         if turn == 'Bot':
             grab = randint(1, max_grab)
             quantity -= grab
             bot.send_message(message.chat.id, f'Бот взял {grab}')
             bot.send_message(message.chat.id, f'Осталось {quantity}')
-            bot.send_message(message.chat.id, 'Ход игрока. Сколько конфет взять?')
+            msg = bot.send_message(message.chat.id, 'Твой ход. Сколько конфет взять?')
+            bot.register_next_step_handler(msg, GrabHandler)
+        if turn == 'User': 
+            msg = bot.send_message(message.chat.id, 'Твой ход. Сколько конфет взять?')
+            bot.register_next_step_handler(msg, GrabHandler)
     elif message.text == 'Stop':
         game = False
         bot.send_message(message.chat.id, 'Остановка игры')
@@ -78,7 +86,10 @@ def GrabHandler(message):
     if game: 
         if quantity > 28:
             grab = int(message.text)
-            quantity -= grab
+            if grab < 29: 
+                quantity -= grab
+            else: 
+                bot.send_message(message, 'Шулер')
             bot.send_message(message.chat.id, f'Осталось {quantity}')
             if quantity > 28:
                 grab = randint(1, max_grab)
@@ -100,5 +111,8 @@ def GrabHandler(message):
             quantity = 0
             game = False
 
+@bot.message_handler(func=handle_game_warning)
+def gameWarning (message):
+    bot.send_message(message.chat.id, 'Необходимо выбрать от 1 до 28 конфет')
 
 bot.polling()
